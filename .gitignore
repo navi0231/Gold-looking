@@ -1,0 +1,5 @@
+last_price.txt
+*.lock
+alert_log.txt
+config.py
+config.ini
