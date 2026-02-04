@@ -1,22 +1,28 @@
-import requests
+import subprocess
+import json
 import re
 
-def get_price(symbol):
-    url = f"https://hq.sinajs.cn/list={symbol}"
-    headers = {'Referer': 'https://finance.sina.com.cn'}
+def get_domestic():
+    # 既然这个能出 1134，就死守这个
+    cmd = "curl -sk --referer 'https://finance.sina.com.cn' 'https://hq.sinajs.cn/list=gds_AU9999'"
     try:
-        response = requests.get(url, headers=headers, timeout=10)
-        data = re.search(r'"(.*)"', response.text).group(1)
-        if not data: return None
-        parts = data.split(',')
-        # 国际金价(hf_XAU)当前价在索引 0，国内(gds_AU9999)在索引 0
-        return parts[0]
+        output = subprocess.check_output(cmd, shell=True).decode('gbk')
+        match = re.search(r'"([^,"]+)', output)
+        return match.group(1) if match else None
+    except:
+        return None
+
+def get_intl():
+    # 使用 my-json-server 的公开数据镜像或替代 API
+    # 尝试一个更简单的公开接口：gold-api (如果不通，直接返回固定测试值判断是否是网络问题)
+    cmd = "curl -sk 'https://api.gold-api.com/price/XAU'"
+    try:
+        output = subprocess.check_output(cmd, shell=True).decode('utf-8')
+        data = json.loads(output)
+        return data.get('price')
     except:
         return None
 
 if __name__ == "__main__":
-    # 统一使用 gds 代码，数据更直观
-    domestic = get_price("gds_AU9999")
-    intl = get_price("hf_XAU")
-    print(f"Domestic: {domestic}")
-    print(f"International: {intl}")
+    print(f"Domestic: {get_domestic()}")
+    print(f"International: {get_intl()}")
